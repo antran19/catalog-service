@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"name": "User Service",
+			"path": "../user-service"
+		},
+		{
+			"name": "Catalog Service",
+			"path": "."
+		},
+		{
+			"name": "Common Libraries",
+			"path": "../common-libs"
+		}
+	],
+	"settings": {}
+}
