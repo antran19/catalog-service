@@ -50,11 +50,14 @@ Postgres database — see the original monorepo's `docker-compose.yml` for a wor
 setup (`discovery-server`, `api-gateway`, `postgres-catalog`, `kafka`) to run this service
 against locally, until this project's own infrastructure/compose setup exists.
 
+## Docker
+
+`Dockerfile` copies a pre-built jar (`mvn clean package` first, then `docker build`) —
+simpler than the old monorepo version, since there's no reactor to build from a root
+context anymore. See the `infra` repo for the docker-compose setup that runs the whole
+cluster.
+
 ## Follow-up (not done yet)
 
-- Set up this repo's own CI/CD pipeline (build, test, Docker image, push to a registry) —
-  if it runs `mvn`, give the workflow `permissions: packages: read` and wire up
-  `server-id: github` in its `actions/setup-java` step so it can resolve `common-libs`
-  from GitHub Packages, same as `common-libs`' own `publish.yml` does for publishing.
-- `Dockerfile` in this repo can be simplified since this is no longer a multi-module
-  reactor — a plain single-project Docker build context now works.
+- Push a built image to a registry (e.g. GHCR) from CI, instead of building it fresh
+  locally every time.
