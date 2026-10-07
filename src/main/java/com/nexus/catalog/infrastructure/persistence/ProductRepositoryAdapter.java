@@ -47,9 +47,9 @@ public class ProductRepositoryAdapter implements ProductRepositoryPort {
     }
 
     @Override
-    public List<Product> search(String query, String categoryId, String status, int page, int size) {
+    public List<Product> search(String query, String categoryId, String status, String sellerId, int page, int size) {
         int offset = page * size;
-        return jpaRepository.search(query, categoryId, status, size, offset).stream()
+        return jpaRepository.search(query, categoryId, status, sellerId, size, offset).stream()
                 .map(this::toDomain)
                 .toList();
     }

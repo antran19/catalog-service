@@ -72,28 +72,28 @@ class SearchProductsUseCaseTest {
 
     @Test
     void search_withMatchingQuery_returnsOnlyMatchingProducts() {
-        List<ProductResult> results = useCase.search(new ProductSearchQuery("gaming", null, null, 0, 20));
+        List<ProductResult> results = useCase.search(new ProductSearchQuery("gaming", null, null, null, 0, 20));
 
         assertThat(results).extracting(ProductResult::name).containsExactly("Gaming Laptop Pro");
     }
 
     @Test
     void search_withBlankQuery_returnsAllProducts() {
-        List<ProductResult> results = useCase.search(new ProductSearchQuery("", null, null, 0, 20));
+        List<ProductResult> results = useCase.search(new ProductSearchQuery("", null, null, null, 0, 20));
 
         assertThat(results).hasSize(2);
     }
 
     @Test
     void search_withNullQuery_returnsAllProducts() {
-        List<ProductResult> results = useCase.search(new ProductSearchQuery(null, null, null, 0, 20));
+        List<ProductResult> results = useCase.search(new ProductSearchQuery(null, null, null, null, 0, 20));
 
         assertThat(results).hasSize(2);
     }
 
     @Test
     void search_filtersyByCategoryId() {
-        List<ProductResult> results = useCase.search(new ProductSearchQuery(null, categoryId, null, 0, 20));
+        List<ProductResult> results = useCase.search(new ProductSearchQuery(null, categoryId, null, null, 0, 20));
 
         assertThat(results).hasSize(2);
     }
@@ -102,7 +102,7 @@ class SearchProductsUseCaseTest {
     void search_rejectsMalformedCategoryIdAs400ValidationError() {
         // Previously reached the native query's CAST(:categoryId AS uuid) and failed in Postgres (500).
         org.assertj.core.api.Assertions.assertThatThrownBy(
-                        () -> useCase.search(new ProductSearchQuery(null, "not-a-uuid", null, 0, 20)))
+                        () -> useCase.search(new ProductSearchQuery(null, "not-a-uuid", null, null, 0, 20)))
                 .isInstanceOf(com.nexus.common.core.exception.ValidationException.class);
     }
 
@@ -114,7 +114,7 @@ class SearchProductsUseCaseTest {
         // through unchanged, this would fail in Postgres and surface as a 500. Canonicalizing
         // via UUID#toString before it reaches the native query avoids that, and since this
         // canonical id matches no seeded product, the filter legitimately returns no results.
-        List<ProductResult> results = useCase.search(new ProductSearchQuery(null, "1-2-3-4-5", null, 0, 20));
+        List<ProductResult> results = useCase.search(new ProductSearchQuery(null, "1-2-3-4-5", null, null, 0, 20));
 
         assertThat(results).isEmpty();
     }
@@ -122,8 +122,22 @@ class SearchProductsUseCaseTest {
     @Test
     void search_withNegativePageAndOversizedSize_isClampedInsteadOfErroring() {
         // Previously a negative page produced a negative SQL OFFSET (Postgres error -> 500).
-        List<ProductResult> results = useCase.search(new ProductSearchQuery(null, null, null, -5, 100_000));
+        List<ProductResult> results = useCase.search(new ProductSearchQuery(null, null, null, null, -5, 100_000));
 
         assertThat(results).hasSize(2);
+    }
+
+    @Test
+    void search_filtersBySellerId_returnsOnlyThatSellersProducts() {
+        var otherSellerProduct = com.nexus.catalog.domain.model.Product.create(
+                "Desk Lamp", "LED desk lamp", categoryId, "seller-2");
+        productRepositoryPort.save(otherSellerProduct);
+        productImagePort.saveAll(otherSellerProduct.getId(), List.of());
+        skuRepositoryPort.save(com.nexus.catalog.domain.model.Sku.create(
+                otherSellerProduct.getId(), "SKU-LAMP1", new BigDecimal("29.99"), null));
+
+        List<ProductResult> results = useCase.search(new ProductSearchQuery(null, null, null, "seller-2", 0, 20));
+
+        assertThat(results).extracting(ProductResult::name).containsExactly("Desk Lamp");
     }
 }

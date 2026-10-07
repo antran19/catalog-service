@@ -30,7 +30,7 @@ public class SearchProductsUseCase {
         String categoryId = query.categoryId() == null || query.categoryId().isBlank() ? null : query.categoryId();
         String canonicalCategoryId = canonicalizeCategoryId(categoryId);
         List<Product> products = productRepositoryPort.search(
-                query.q(), canonicalCategoryId, query.status(), query.page(), query.size());
+                query.q(), canonicalCategoryId, query.status(), query.sellerId(), query.page(), query.size());
 
         // N+1 per-product enrichment — acceptable at this sub-project's scale; optimize with
         // a batch/join fetch if this ever needs to handle real traffic.

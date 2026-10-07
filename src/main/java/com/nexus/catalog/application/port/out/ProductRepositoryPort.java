@@ -10,5 +10,5 @@ public interface ProductRepositoryPort {
     Optional<Product> findById(String id);
     void deleteById(String id);
     List<Product> findByCategoryId(String categoryId);
-    List<Product> search(String query, String categoryId, String status, int page, int size);
+    List<Product> search(String query, String categoryId, String status, String sellerId, int page, int size);
 }

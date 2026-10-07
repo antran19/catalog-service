@@ -106,9 +106,11 @@ public class ProductController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String categoryId,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String sellerId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        List<ProductResult> results = searchProductsUseCase.search(new ProductSearchQuery(q, categoryId, status, page, size));
+        List<ProductResult> results = searchProductsUseCase.search(
+                new ProductSearchQuery(q, categoryId, status, sellerId, page, size));
         List<ProductResponse> responses = results.stream().map(mapper::toResponse).toList();
         return ResponseEntity.ok(ApiResponse.ok(responses));
     }
@@ -117,7 +119,7 @@ public class ProductController {
     public ResponseEntity<ApiResponse<List<ProductResponse>>> discover(
             @RequestParam(required = false) String categoryId) {
         List<ProductResult> results = searchProductsUseCase.search(
-                new ProductSearchQuery(null, categoryId, "ACTIVE", 0, 20));
+                new ProductSearchQuery(null, categoryId, "ACTIVE", null, 0, 20));
         List<ProductResponse> responses = results.stream().map(mapper::toResponse).toList();
         return ResponseEntity.ok(ApiResponse.ok(responses));
     }

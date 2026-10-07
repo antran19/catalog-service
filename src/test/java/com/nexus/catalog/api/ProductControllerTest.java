@@ -350,6 +350,7 @@ class ProductControllerTest {
                         .param("q", "laptop")
                         .param("categoryId", "11111111-1111-1111-1111-111111111111")
                         .param("status", "ACTIVE")
+                        .param("sellerId", "seller-42")
                         .param("page", "2")
                         .param("size", "5"))
                 .andExpect(status().isOk());
@@ -357,7 +358,7 @@ class ProductControllerTest {
         ArgumentCaptor<ProductSearchQuery> captor = ArgumentCaptor.forClass(ProductSearchQuery.class);
         verify(searchProductsUseCase).search(captor.capture());
         assertThat(captor.getValue()).isEqualTo(new ProductSearchQuery(
-                "laptop", "11111111-1111-1111-1111-111111111111", "ACTIVE", 2, 5));
+                "laptop", "11111111-1111-1111-1111-111111111111", "ACTIVE", "seller-42", 2, 5));
     }
 
     @Test

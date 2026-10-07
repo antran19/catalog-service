@@ -8,7 +8,7 @@ package com.nexus.catalog.application.usecase;
  * single anonymous request, and a negative page/size produced an invalid SQL OFFSET/LIMIT (500).
  * Page is also capped so that {@code page * size} (the SQL OFFSET, an int) can never overflow.
  */
-public record ProductSearchQuery(String q, String categoryId, String status, int page, int size) {
+public record ProductSearchQuery(String q, String categoryId, String status, String sellerId, int page, int size) {
 
     public static final int MAX_SIZE = 100;
     static final int MAX_PAGE = Integer.MAX_VALUE / MAX_SIZE;
