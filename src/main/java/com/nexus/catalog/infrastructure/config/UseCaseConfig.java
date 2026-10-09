@@ -83,4 +83,10 @@ public class UseCaseConfig {
                                                          ProductImagePort imagePort) {
         return new SearchProductsUseCase(productPort, skuPort, imagePort);
     }
+
+    @Bean
+    public MarkProductSoldUseCase markProductSoldUseCase(ProductRepositoryPort productPort,
+                                                          EventPublisherPort eventPublisherPort) {
+        return new MarkProductSoldUseCase(productPort, eventPublisherPort);
+    }
 }
