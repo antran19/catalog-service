@@ -1,5 +1,6 @@
 package com.nexus.catalog.infrastructure.messaging;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.catalog.application.usecase.MarkProductSoldUseCase;
 import com.nexus.common.events.AuctionWonEvent;
@@ -23,17 +24,15 @@ public class AuctionEventsListener {
         this.markProductSoldUseCase = markProductSoldUseCase;
     }
 
+    // Exceptions are NOT caught here on purpose: KafkaErrorHandlingConfig retries them, then
+    // moves the record to the dead-letter topic instead of losing it.
     @KafkaListener(topics = "auction-events")
-    public void onMessage(String rawPayload) {
-        try {
-            String eventType = objectMapper.readTree(rawPayload).path("eventType").asText();
-            if (!"AuctionWon".equals(eventType)) {
-                return;
-            }
-            AuctionWonEvent event = objectMapper.readValue(rawPayload, AuctionWonEvent.class);
-            markProductSoldUseCase.markSold(event.getProductId());
-        } catch (Exception e) {
-            log.error("Failed to process auction-events message: {}", rawPayload, e);
+    public void onMessage(String rawPayload) throws JsonProcessingException {
+        String eventType = objectMapper.readTree(rawPayload).path("eventType").asText();
+        if (!"AuctionWon".equals(eventType)) {
+            return;
         }
+        AuctionWonEvent event = objectMapper.readValue(rawPayload, AuctionWonEvent.class);
+        markProductSoldUseCase.markSold(event.getProductId());
     }
 }
