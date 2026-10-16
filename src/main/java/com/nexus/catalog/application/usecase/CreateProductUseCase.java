@@ -49,8 +49,11 @@ public class CreateProductUseCase {
         Sku sku = Sku.create(savedProduct.getId(), skuCode, command.price(), null);
         Sku savedSku = skuRepositoryPort.save(sku);
 
+        // sellerId and initialStock let fulfillment-service register the stock owner and open
+        // the inventory record (keyed by the PRODUCT id, see fulfillment's RegisterProductStock).
         eventPublisherPort.publish(new com.nexus.common.events.ProductCreatedEvent(
-                savedProduct.getId(), savedProduct.getName(), savedProduct.getCategoryId()));
+                savedProduct.getId(), savedProduct.getName(), savedProduct.getCategoryId(),
+                savedProduct.getSellerId(), command.initialStock()));
 
         return new ProductResult(savedProduct.getId(), savedProduct.getName(), savedProduct.getDescription(),
                 savedProduct.getCategoryId(), savedProduct.getStatus().name(), savedProduct.getSellerId(),

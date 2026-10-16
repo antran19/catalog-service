@@ -66,8 +66,10 @@ public class ProductController {
         // has no sellerId field at all.
         String sellerId = callerId(authentication);
         List<String> images = request.imageUrls() == null ? List.of() : request.imageUrls();
+        int initialStock = request.initialStock() == null ? 0 : request.initialStock();
         CreateProductCommand command = new CreateProductCommand(
-                request.name(), request.description(), request.categoryId(), sellerId, request.price(), images);
+                request.name(), request.description(), request.categoryId(), sellerId, request.price(), images,
+                initialStock);
         ProductResult result = createProductUseCase.create(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(mapper.toResponse(result)));
     }

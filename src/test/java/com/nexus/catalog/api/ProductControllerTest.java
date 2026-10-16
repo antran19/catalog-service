@@ -96,6 +96,52 @@ class ProductControllerTest {
     }
 
     @Test
+    void createProduct_passesInitialStockToTheUseCase_defaultingToZero() throws Exception {
+        when(jwtTokenProvider.isValid("good-token")).thenReturn(true);
+        io.jsonwebtoken.Claims claims = io.jsonwebtoken.Jwts.claims()
+                .subject("seller-id")
+                .add("privileges", List.of("PRODUCT.CREATE"))
+                .build();
+        when(jwtTokenProvider.parseClaims("good-token")).thenReturn(claims);
+        when(createProductUseCase.create(any())).thenReturn(new ProductResult(
+                "product-id", "Laptop X", "desc", "cat-id", "DRAFT", "seller-id",
+                List.of(), "sku-id", "SKU-ABC12345", new BigDecimal("999.99")));
+
+        mockMvc.perform(post("/api/v1/products")
+                        .header("Authorization", "Bearer good-token")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name":"A","categoryId":"cat-id","price":10,"initialStock":7}"""))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/api/v1/products")
+                        .header("Authorization", "Bearer good-token")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name":"B","categoryId":"cat-id","price":10}"""))
+                .andExpect(status().isCreated());
+
+        verify(createProductUseCase).create(argThat((CreateProductCommand cmd) -> cmd.initialStock() == 7));
+        verify(createProductUseCase).create(argThat((CreateProductCommand cmd) -> cmd.initialStock() == 0));
+    }
+
+    @Test
+    void createProduct_rejectsNegativeInitialStock() throws Exception {
+        when(jwtTokenProvider.isValid("good-token")).thenReturn(true);
+        io.jsonwebtoken.Claims claims = io.jsonwebtoken.Jwts.claims()
+                .subject("seller-id")
+                .add("privileges", List.of("PRODUCT.CREATE"))
+                .build();
+        when(jwtTokenProvider.parseClaims("good-token")).thenReturn(claims);
+
+        mockMvc.perform(post("/api/v1/products")
+                        .header("Authorization", "Bearer good-token")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name":"A","categoryId":"cat-id","price":10,"initialStock":-1}"""))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void createProduct_ignoresSpoofedSellerIdInRequestBody_usesJwtSubjectInstead() throws Exception {
         when(jwtTokenProvider.isValid("good-token")).thenReturn(true);
         io.jsonwebtoken.Claims claims = io.jsonwebtoken.Jwts.claims()

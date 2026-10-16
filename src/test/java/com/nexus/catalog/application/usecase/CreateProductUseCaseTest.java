@@ -60,6 +60,21 @@ class CreateProductUseCaseTest {
     }
 
     @Test
+    void create_publishesProductCreatedWithTheSellerAndInitialStock() {
+        ProductResult result = useCase.create(new CreateProductCommand(
+                "Laptop X", "desc", "cat-id", "seller-id", new BigDecimal("999.99"), List.of(), 25));
+
+        org.mockito.ArgumentCaptor<com.nexus.common.events.DomainEvent> captor =
+                org.mockito.ArgumentCaptor.forClass(com.nexus.common.events.DomainEvent.class);
+        verify(eventPublisherPort).publish(captor.capture());
+        com.nexus.common.events.ProductCreatedEvent event =
+                (com.nexus.common.events.ProductCreatedEvent) captor.getValue();
+        assertThat(event.getProductId()).isEqualTo(result.id());
+        assertThat(event.getSellerId()).isEqualTo("seller-id");
+        assertThat(event.getInitialStock()).isEqualTo(25);
+    }
+
+    @Test
     void create_rejectsUnknownCategory() {
         when(categoryRepositoryPort.findById("missing-cat")).thenReturn(Optional.empty());
 
