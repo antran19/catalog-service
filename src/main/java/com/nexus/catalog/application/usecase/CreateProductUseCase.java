@@ -51,9 +51,10 @@ public class CreateProductUseCase {
 
         // sellerId and initialStock let fulfillment-service register the stock owner and open
         // the inventory record (keyed by the PRODUCT id, see fulfillment's RegisterProductStock).
+        // price lets commerce-service price cart items itself instead of trusting the client.
         eventPublisherPort.publish(new com.nexus.common.events.ProductCreatedEvent(
                 savedProduct.getId(), savedProduct.getName(), savedProduct.getCategoryId(),
-                savedProduct.getSellerId(), command.initialStock()));
+                savedProduct.getSellerId(), command.initialStock(), savedSku.getPrice()));
 
         return new ProductResult(savedProduct.getId(), savedProduct.getName(), savedProduct.getDescription(),
                 savedProduct.getCategoryId(), savedProduct.getStatus().name(), savedProduct.getSellerId(),

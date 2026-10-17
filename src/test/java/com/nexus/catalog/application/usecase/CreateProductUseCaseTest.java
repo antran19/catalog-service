@@ -60,7 +60,7 @@ class CreateProductUseCaseTest {
     }
 
     @Test
-    void create_publishesProductCreatedWithTheSellerAndInitialStock() {
+    void create_publishesProductCreatedWithTheSellerInitialStockAndPrice() {
         ProductResult result = useCase.create(new CreateProductCommand(
                 "Laptop X", "desc", "cat-id", "seller-id", new BigDecimal("999.99"), List.of(), 25));
 
@@ -72,6 +72,7 @@ class CreateProductUseCaseTest {
         assertThat(event.getProductId()).isEqualTo(result.id());
         assertThat(event.getSellerId()).isEqualTo("seller-id");
         assertThat(event.getInitialStock()).isEqualTo(25);
+        assertThat(event.getPrice()).isEqualByComparingTo("999.99");
     }
 
     @Test
