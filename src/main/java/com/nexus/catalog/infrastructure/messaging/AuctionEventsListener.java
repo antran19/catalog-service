@@ -3,6 +3,8 @@ package com.nexus.catalog.infrastructure.messaging;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.catalog.application.usecase.MarkProductSoldUseCase;
+import com.nexus.catalog.application.usecase.RelistProductUseCase;
+import com.nexus.common.events.AuctionPaymentTimeoutEvent;
 import com.nexus.common.events.AuctionWonEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,10 +20,13 @@ public class AuctionEventsListener {
 
     private final ObjectMapper objectMapper;
     private final MarkProductSoldUseCase markProductSoldUseCase;
+    private final RelistProductUseCase relistProductUseCase;
 
-    public AuctionEventsListener(ObjectMapper objectMapper, MarkProductSoldUseCase markProductSoldUseCase) {
+    public AuctionEventsListener(ObjectMapper objectMapper, MarkProductSoldUseCase markProductSoldUseCase,
+                                 RelistProductUseCase relistProductUseCase) {
         this.objectMapper = objectMapper;
         this.markProductSoldUseCase = markProductSoldUseCase;
+        this.relistProductUseCase = relistProductUseCase;
     }
 
     // Exceptions are NOT caught here on purpose: KafkaErrorHandlingConfig retries them, then
@@ -29,10 +34,12 @@ public class AuctionEventsListener {
     @KafkaListener(topics = "auction-events")
     public void onMessage(String rawPayload) throws JsonProcessingException {
         String eventType = objectMapper.readTree(rawPayload).path("eventType").asText();
-        if (!"AuctionWon".equals(eventType)) {
-            return;
+        if ("AuctionWon".equals(eventType)) {
+            AuctionWonEvent event = objectMapper.readValue(rawPayload, AuctionWonEvent.class);
+            markProductSoldUseCase.markSold(event.getProductId());
+        } else if ("AuctionPaymentTimeout".equals(eventType)) {
+            AuctionPaymentTimeoutEvent event = objectMapper.readValue(rawPayload, AuctionPaymentTimeoutEvent.class);
+            relistProductUseCase.relist(event.getProductId());
         }
-        AuctionWonEvent event = objectMapper.readValue(rawPayload, AuctionWonEvent.class);
-        markProductSoldUseCase.markSold(event.getProductId());
     }
 }

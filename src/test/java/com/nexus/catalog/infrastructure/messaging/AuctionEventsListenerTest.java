@@ -13,7 +13,10 @@ class AuctionEventsListenerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
     private final MarkProductSoldUseCase markProductSoldUseCase = mock(MarkProductSoldUseCase.class);
-    private final AuctionEventsListener listener = new AuctionEventsListener(objectMapper, markProductSoldUseCase);
+    private final com.nexus.catalog.application.usecase.RelistProductUseCase relistProductUseCase =
+            mock(com.nexus.catalog.application.usecase.RelistProductUseCase.class);
+    private final AuctionEventsListener listener = new AuctionEventsListener(objectMapper, markProductSoldUseCase,
+            relistProductUseCase);
 
     @Test
     void onMessage_auctionWon_marksTheProductSold() throws Exception {
@@ -43,5 +46,13 @@ class AuctionEventsListenerTest {
                 .isInstanceOf(JsonProcessingException.class);
 
         verify(markProductSoldUseCase, never()).markSold(any());
+    }
+
+    @Test
+    void onMessage_winnerDefaulted_putsTheProductBackOnSale() throws Exception {
+        listener.onMessage("{\"eventId\":\"e\",\"eventType\":\"AuctionPaymentTimeout\",\"occurredAt\":\"2026-01-01T00:00:00Z\","
+                + "\"aggregateId\":\"a-1\",\"auctionId\":\"a-1\",\"winnerId\":\"w\",\"productId\":\"p-1\"}");
+
+        verify(relistProductUseCase).relist("p-1");
     }
 }

@@ -89,4 +89,10 @@ public class UseCaseConfig {
                                                           EventPublisherPort eventPublisherPort) {
         return new MarkProductSoldUseCase(productPort, eventPublisherPort);
     }
+
+    @Bean
+    public RelistProductUseCase relistProductUseCase(ProductRepositoryPort productPort,
+                                                      EventPublisherPort eventPublisherPort) {
+        return new RelistProductUseCase(productPort, eventPublisherPort);
+    }
 }
