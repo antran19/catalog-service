@@ -26,7 +26,7 @@
     <springdoc.version>2.6.0</springdoc.version>
     <!-- Version of the com.nexus:common-* artifacts published by the sibling
          common-libs project (install locally with: cd ../common-libs && mvn clean install). -->
-    <common-libs.version>1.14.0</common-libs.version>
+    <common-libs.version>1.15.0</common-libs.version>
   </properties>
 
   <dependencyManagement>
@@ -74,6 +74,11 @@
     <dependency>
       <groupId>com.nexus</groupId>
       <artifactId>common-security</artifactId>
+      <version>${common-libs.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.nexus</groupId>
+      <artifactId>common-kafka</artifactId>
       <version>${common-libs.version}</version>
     </dependency>
     <dependency>
