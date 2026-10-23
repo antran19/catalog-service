@@ -27,7 +27,7 @@
     <springdoc.version>2.6.0</springdoc.version>
     <!-- Version of the com.nexus:common-* artifacts published by the sibling
          common-libs project (install locally with: cd ../common-libs && mvn clean install). -->
-    <common-libs.version>1.15.0</common-libs.version>
+    <common-libs.version>1.16.1</common-libs.version>
   </properties>
 
   <dependencyManagement>
