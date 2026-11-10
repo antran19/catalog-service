@@ -2,15 +2,19 @@ package com.nexus.catalog.api;
 
 import com.nexus.catalog.api.dto.request.ChangeProductStatusRequest;
 import com.nexus.catalog.api.dto.request.CreateProductRequest;
+import com.nexus.catalog.api.dto.request.SetSellingPriceRequest;
 import com.nexus.catalog.api.dto.request.UpdateProductRequest;
 import com.nexus.catalog.api.dto.response.ProductResponse;
+import com.nexus.catalog.api.dto.response.SellingPriceResponse;
 import com.nexus.catalog.api.mapper.ProductApiMapper;
 import com.nexus.catalog.application.usecase.ChangeProductStatusUseCase;
 import com.nexus.catalog.application.usecase.CreateProductCommand;
 import com.nexus.catalog.application.usecase.CreateProductUseCase;
 import com.nexus.catalog.application.usecase.DeleteProductUseCase;
 import com.nexus.catalog.application.usecase.GetProductUseCase;
+import com.nexus.catalog.application.usecase.GetSellingPricesUseCase;
 import com.nexus.catalog.application.usecase.ProductResult;
+import com.nexus.catalog.application.usecase.SetSellingPriceUseCase;
 import com.nexus.catalog.application.usecase.ProductSearchQuery;
 import com.nexus.catalog.application.usecase.SearchProductsUseCase;
 import com.nexus.catalog.application.usecase.UpdateProductUseCase;
@@ -38,6 +42,8 @@ public class ProductController {
     private final GetProductUseCase getProductUseCase;
     private final SearchProductsUseCase searchProductsUseCase;
     private final ChangeProductStatusUseCase changeProductStatusUseCase;
+    private final SetSellingPriceUseCase setSellingPriceUseCase;
+    private final GetSellingPricesUseCase getSellingPricesUseCase;
     private final ProductApiMapper mapper;
 
     public ProductController(CreateProductUseCase createProductUseCase,
@@ -46,6 +52,8 @@ public class ProductController {
                               GetProductUseCase getProductUseCase,
                               SearchProductsUseCase searchProductsUseCase,
                               ChangeProductStatusUseCase changeProductStatusUseCase,
+                              SetSellingPriceUseCase setSellingPriceUseCase,
+                              GetSellingPricesUseCase getSellingPricesUseCase,
                               ProductApiMapper mapper) {
         this.createProductUseCase = createProductUseCase;
         this.updateProductUseCase = updateProductUseCase;
@@ -53,6 +61,8 @@ public class ProductController {
         this.getProductUseCase = getProductUseCase;
         this.searchProductsUseCase = searchProductsUseCase;
         this.changeProductStatusUseCase = changeProductStatusUseCase;
+        this.setSellingPriceUseCase = setSellingPriceUseCase;
+        this.getSellingPricesUseCase = getSellingPricesUseCase;
         this.mapper = mapper;
     }
 
@@ -101,6 +111,24 @@ public class ProductController {
         ProductResult result = changeProductStatusUseCase.changeStatus(id, request.status(),
                 callerId(authentication), canManageAny(authentication));
         return ResponseEntity.ok(ApiResponse.ok(mapper.toResponse(result)));
+    }
+
+    // Sets the SELLING price (what buyers pay). Must be >= the original price given at creation.
+    @RequiresPrivilege("PRODUCT.UPDATE")
+    @PostMapping("/{id}/selling-prices")
+    public ResponseEntity<ApiResponse<ProductResponse>> setSellingPrice(Authentication authentication,
+                                                                          @PathVariable String id,
+                                                                          @Valid @RequestBody SetSellingPriceRequest request) {
+        ProductResult result = setSellingPriceUseCase.setSellingPrice(id, request.price(),
+                callerId(authentication), canManageAny(authentication));
+        return ResponseEntity.ok(ApiResponse.ok(mapper.toResponse(result)));
+    }
+
+    @GetMapping("/{id}/selling-prices")
+    public ResponseEntity<ApiResponse<List<SellingPriceResponse>>> sellingPrices(@PathVariable String id) {
+        List<SellingPriceResponse> prices = getSellingPricesUseCase.get(id).stream()
+                .map(p -> new SellingPriceResponse(p.price(), p.effectiveFrom())).toList();
+        return ResponseEntity.ok(ApiResponse.ok(prices));
     }
 
     @GetMapping

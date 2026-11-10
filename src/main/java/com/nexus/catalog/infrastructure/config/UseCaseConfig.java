@@ -4,6 +4,7 @@ import com.nexus.catalog.application.port.out.CategoryRepositoryPort;
 import com.nexus.catalog.application.port.out.EventPublisherPort;
 import com.nexus.catalog.application.port.out.ProductImagePort;
 import com.nexus.catalog.application.port.out.ProductRepositoryPort;
+import com.nexus.catalog.application.port.out.SellingPriceRepositoryPort;
 import com.nexus.catalog.application.port.out.SkuRepositoryPort;
 import com.nexus.catalog.application.usecase.*;
 import org.springframework.context.annotation.Bean;
@@ -43,8 +44,25 @@ public class UseCaseConfig {
                                                        SkuRepositoryPort skuPort,
                                                        ProductImagePort imagePort,
                                                        CategoryRepositoryPort categoryPort,
-                                                       EventPublisherPort eventPublisherPort) {
-        return new CreateProductUseCase(productPort, skuPort, imagePort, categoryPort, eventPublisherPort);
+                                                       EventPublisherPort eventPublisherPort,
+                                                       SellingPriceRepositoryPort sellingPricePort) {
+        return new CreateProductUseCase(productPort, skuPort, imagePort, categoryPort, eventPublisherPort,
+                sellingPricePort);
+    }
+
+    @Bean
+    public SetSellingPriceUseCase setSellingPriceUseCase(ProductRepositoryPort productPort,
+                                                           SkuRepositoryPort skuPort,
+                                                           SellingPriceRepositoryPort sellingPricePort,
+                                                           ProductImagePort imagePort) {
+        return new SetSellingPriceUseCase(productPort, skuPort, sellingPricePort, imagePort);
+    }
+
+    @Bean
+    public GetSellingPricesUseCase getSellingPricesUseCase(ProductRepositoryPort productPort,
+                                                             SkuRepositoryPort skuPort,
+                                                             SellingPriceRepositoryPort sellingPricePort) {
+        return new GetSellingPricesUseCase(productPort, skuPort, sellingPricePort);
     }
 
     @Bean

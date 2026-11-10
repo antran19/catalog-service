@@ -21,16 +21,21 @@ public class SkuJpaEntity {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Column(name = "original_price", nullable = false)
+    private BigDecimal originalPrice;
+
     private String attributes;
 
     protected SkuJpaEntity() {
     }
 
-    public SkuJpaEntity(UUID id, UUID productId, String skuCode, BigDecimal price, String attributes) {
+    public SkuJpaEntity(UUID id, UUID productId, String skuCode, BigDecimal price, BigDecimal originalPrice,
+                        String attributes) {
         this.id = id;
         this.productId = productId;
         this.skuCode = skuCode;
         this.price = price;
+        this.originalPrice = originalPrice;
         this.attributes = attributes;
     }
 
@@ -38,5 +43,6 @@ public class SkuJpaEntity {
     public UUID getProductId() { return productId; }
     public String getSkuCode() { return skuCode; }
     public BigDecimal getPrice() { return price; }
+    public BigDecimal getOriginalPrice() { return originalPrice; }
     public String getAttributes() { return attributes; }
 }

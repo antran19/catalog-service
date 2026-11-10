@@ -5,6 +5,7 @@ import com.nexus.catalog.application.port.out.CategoryRepositoryPort;
 import com.nexus.catalog.application.port.out.EventPublisherPort;
 import com.nexus.catalog.application.port.out.ProductImagePort;
 import com.nexus.catalog.application.port.out.ProductRepositoryPort;
+import com.nexus.catalog.application.port.out.SellingPriceRepositoryPort;
 import com.nexus.catalog.application.port.out.SkuRepositoryPort;
 import com.nexus.catalog.domain.model.Product;
 import com.nexus.catalog.domain.model.Sku;
@@ -20,17 +21,20 @@ public class CreateProductUseCase {
     private final ProductImagePort productImagePort;
     private final CategoryRepositoryPort categoryRepositoryPort;
     private final EventPublisherPort eventPublisherPort;
+    private final SellingPriceRepositoryPort sellingPriceRepositoryPort;
 
     public CreateProductUseCase(ProductRepositoryPort productRepositoryPort,
                                  SkuRepositoryPort skuRepositoryPort,
                                  ProductImagePort productImagePort,
                                  CategoryRepositoryPort categoryRepositoryPort,
-                                 EventPublisherPort eventPublisherPort) {
+                                 EventPublisherPort eventPublisherPort,
+                                 SellingPriceRepositoryPort sellingPriceRepositoryPort) {
         this.productRepositoryPort = productRepositoryPort;
         this.skuRepositoryPort = skuRepositoryPort;
         this.productImagePort = productImagePort;
         this.categoryRepositoryPort = categoryRepositoryPort;
         this.eventPublisherPort = eventPublisherPort;
+        this.sellingPriceRepositoryPort = sellingPriceRepositoryPort;
     }
 
     @Transactional
@@ -48,6 +52,8 @@ public class CreateProductUseCase {
         String skuCode = "SKU-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         Sku sku = Sku.create(savedProduct.getId(), skuCode, command.price(), null);
         Sku savedSku = skuRepositoryPort.save(sku);
+        // The request's price is the ORIGINAL price; the product first sells at that price too.
+        sellingPriceRepositoryPort.record(savedSku.getId(), savedSku.getPrice(), command.sellerId());
 
         // sellerId and initialStock let fulfillment-service register the stock owner and open
         // the inventory record (keyed by the PRODUCT id, see fulfillment's RegisterProductStock).

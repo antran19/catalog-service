@@ -5,6 +5,7 @@ import com.nexus.catalog.application.port.out.CategoryRepositoryPort;
 import com.nexus.catalog.application.port.out.EventPublisherPort;
 import com.nexus.catalog.application.port.out.ProductImagePort;
 import com.nexus.catalog.application.port.out.ProductRepositoryPort;
+import com.nexus.catalog.application.port.out.SellingPriceRepositoryPort;
 import com.nexus.catalog.application.port.out.SkuRepositoryPort;
 import com.nexus.catalog.domain.model.Category;
 import com.nexus.catalog.domain.model.Product;
@@ -30,6 +31,7 @@ class CreateProductUseCaseTest {
     private ProductImagePort productImagePort;
     private CategoryRepositoryPort categoryRepositoryPort;
     private EventPublisherPort eventPublisherPort;
+    private SellingPriceRepositoryPort sellingPriceRepositoryPort;
     private CreateProductUseCase useCase;
 
     @BeforeEach
@@ -39,7 +41,9 @@ class CreateProductUseCaseTest {
         productImagePort = mock(ProductImagePort.class);
         categoryRepositoryPort = mock(CategoryRepositoryPort.class);
         eventPublisherPort = mock(EventPublisherPort.class);
-        useCase = new CreateProductUseCase(productRepositoryPort, skuRepositoryPort, productImagePort, categoryRepositoryPort, eventPublisherPort);
+        sellingPriceRepositoryPort = mock(SellingPriceRepositoryPort.class);
+        useCase = new CreateProductUseCase(productRepositoryPort, skuRepositoryPort, productImagePort, categoryRepositoryPort, eventPublisherPort,
+                sellingPriceRepositoryPort);
 
         when(categoryRepositoryPort.findById("cat-id"))
                 .thenReturn(Optional.of(Category.reconstitute("cat-id", "Electronics", null, Instant.now())));

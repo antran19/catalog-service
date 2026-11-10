@@ -56,9 +56,12 @@ class CatalogCheckConstraintsTest {
         return id;
     }
 
+    // The original price equals the selling price, except for a selling price of zero or below: then
+    // the original price is 1, so that only the selling-price constraint (V6) is the one that fires.
     private void insertSku(UUID productId, String price) {
-        jdbcTemplate.update("INSERT INTO skus (id, product_id, sku_code, price) VALUES (?, ?, ?, CAST(? AS NUMERIC))",
-                UUID.randomUUID(), productId, "SKU-" + UUID.randomUUID(), price);
+        jdbcTemplate.update("INSERT INTO skus (id, product_id, sku_code, price, original_price) VALUES (?, ?, ?, CAST(? AS NUMERIC), "
+                        + "CASE WHEN CAST(? AS NUMERIC) > 0 THEN CAST(? AS NUMERIC) ELSE 1 END)",
+                UUID.randomUUID(), productId, "SKU-" + UUID.randomUUID(), price, price, price);
     }
 
     @ParameterizedTest
@@ -79,6 +82,24 @@ class CatalogCheckConstraintsTest {
     void aSkuWithAPositivePrice_isAccepted() {
         UUID productId = insertProduct("ACTIVE");
         assertThatCode(() -> insertSku(productId, "0.01")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void aSellingPriceBelowTheOriginalPrice_isRejected() {
+        UUID productId = insertProduct("ACTIVE");
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO skus (id, product_id, sku_code, price, original_price) VALUES (?, ?, ?, 99, 100)",
+                UUID.randomUUID(), productId, "SKU-" + UUID.randomUUID()))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("chk_skus_selling_not_below_original");
+    }
+
+    @Test
+    void aSellingPriceAboveTheOriginalPrice_isAccepted() {
+        UUID productId = insertProduct("ACTIVE");
+        assertThatCode(() -> jdbcTemplate.update(
+                "INSERT INTO skus (id, product_id, sku_code, price, original_price) VALUES (?, ?, ?, 150, 100)",
+                UUID.randomUUID(), productId, "SKU-" + UUID.randomUUID())).doesNotThrowAnyException();
     }
 
     @ParameterizedTest

@@ -9,6 +9,8 @@ import com.nexus.catalog.application.usecase.GetProductUseCase;
 import com.nexus.catalog.application.usecase.ProductResult;
 import com.nexus.catalog.application.usecase.ProductSearchQuery;
 import com.nexus.catalog.application.usecase.SearchProductsUseCase;
+import com.nexus.catalog.application.usecase.GetSellingPricesUseCase;
+import com.nexus.catalog.application.usecase.SetSellingPriceUseCase;
 import com.nexus.catalog.application.usecase.UpdateProductUseCase;
 import com.nexus.catalog.infrastructure.config.SecurityConfig;
 import com.nexus.common.core.exception.ForbiddenException;
@@ -58,6 +60,8 @@ class ProductControllerTest {
     @MockBean private GetProductUseCase getProductUseCase;
     @MockBean private SearchProductsUseCase searchProductsUseCase;
     @MockBean private ChangeProductStatusUseCase changeProductStatusUseCase;
+    @MockBean private SetSellingPriceUseCase setSellingPriceUseCase;
+    @MockBean private GetSellingPricesUseCase getSellingPricesUseCase;
     @MockBean private JwtTokenProvider jwtTokenProvider;
 
     @Test
@@ -305,6 +309,62 @@ class ProductControllerTest {
         verify(searchProductsUseCase).search(captor.capture());
         assertThat(captor.getValue().status()).isEqualTo("ACTIVE");
         assertThat(captor.getValue().q()).isNull();
+    }
+
+    @Test
+    void setSellingPrice_returns401WithoutToken() throws Exception {
+        mockMvc.perform(post("/api/v1/products/p-id/selling-prices")
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"price\":550000}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void setSellingPrice_returns200AndPassesCallerIdentityToUseCase() throws Exception {
+        authenticateAs("seller-id", "PRODUCT.UPDATE");
+        when(setSellingPriceUseCase.setSellingPrice("p-id", new BigDecimal("550000"), "seller-id", false))
+                .thenReturn(new ProductResult(
+                        "p-id", "Laptop X", "desc", "cat-id", "ACTIVE", "seller-id",
+                        List.of(), "sku-id", "SKU-ABC12345", new BigDecimal("550000")));
+
+        mockMvc.perform(post("/api/v1/products/p-id/selling-prices")
+                        .header("Authorization", "Bearer good-token")
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"price\":550000}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.price").value(550000));
+
+        verify(setSellingPriceUseCase).setSellingPrice("p-id", new BigDecimal("550000"), "seller-id", false);
+    }
+
+    @Test
+    void setSellingPrice_returns400WhenPriceIsMissingOrZero() throws Exception {
+        authenticateAs("seller-id", "PRODUCT.UPDATE");
+
+        mockMvc.perform(post("/api/v1/products/p-id/selling-prices")
+                        .header("Authorization", "Bearer good-token")
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"price\":0}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/v1/products/p-id/selling-prices")
+                        .header("Authorization", "Bearer good-token")
+                        .contentType(APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void sellingPrices_isPublicAndListsTheHistoryWithoutTheOriginalPrice() throws Exception {
+        when(getSellingPricesUseCase.get("p-id")).thenReturn(List.of(
+                new com.nexus.catalog.domain.model.SellingPrice(new BigDecimal("550000"), java.time.Instant.parse("2026-11-10T10:00:00Z")),
+                new com.nexus.catalog.domain.model.SellingPrice(new BigDecimal("400000"), java.time.Instant.parse("2026-11-01T10:00:00Z"))));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/products/p-id/selling-prices"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].price").value(550000))
+                .andExpect(jsonPath("$.data[1].price").value(400000))
+                .andExpect(jsonPath("$.data[0].originalPrice").doesNotExist());
     }
 
     @Test

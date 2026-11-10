@@ -21,7 +21,7 @@ public class SkuRepositoryAdapter implements SkuRepositoryPort {
     public Sku save(Sku sku) {
         SkuJpaEntity entity = new SkuJpaEntity(
                 UUID.fromString(sku.getId()), UUID.fromString(sku.getProductId()),
-                sku.getSkuCode(), sku.getPrice(), sku.getAttributes());
+                sku.getSkuCode(), sku.getPrice(), sku.getOriginalPrice(), sku.getAttributes());
         jpaRepository.save(entity);
         return sku;
     }
@@ -31,7 +31,7 @@ public class SkuRepositoryAdapter implements SkuRepositoryPort {
         return UuidIds.tryParse(productId)
                 .map(uuid -> jpaRepository.findByProductId(uuid).stream()
                         .map(e -> Sku.reconstitute(e.getId().toString(), e.getProductId().toString(),
-                                e.getSkuCode(), e.getPrice(), e.getAttributes()))
+                                e.getSkuCode(), e.getPrice(), e.getOriginalPrice(), e.getAttributes()))
                         .toList())
                 .orElse(List.of());
     }
